@@ -1,0 +1,8 @@
+flask
+peewee
+psycopg2-binary
+redis
+rq
+gunicorn
+pytest 
+magicmock

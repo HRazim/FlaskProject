@@ -1,0 +1,17 @@
+__pycache__/
+*.Identifier
+.env
+instance/
+.venv
+.flaskenv
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+lib/
+lib64/      

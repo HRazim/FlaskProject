@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commande #{{ order_id }} - api8inf349</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
+        .container { max-width: 700px; margin: 0 auto; padding: 20px; }
+        h1 { text-align: center; margin-bottom: 25px; color: #2c3e50; }
+        h2 { margin-bottom: 15px; color: #2c3e50; font-size: 1.2em; }
+        a { color: #3498db; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        .card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .info-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f0f0; }
+        .info-row:last-child { border-bottom: none; }
+        .label { font-weight: 600; color: #555; }
+
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; }
+        .status-paid { background: #d4edda; color: #155724; }
+        .status-unpaid { background: #fff3cd; color: #856404; }
+        .status-processing { background: #cce5ff; color: #004085; }
+        .status-error { background: #f8d7da; color: #721c24; }
+
+        form { display: flex; flex-direction: column; gap: 12px; }
+        label { font-weight: 600; font-size: 0.9em; color: #555; }
+        input, select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 1em; }
+        input:focus, select:focus { outline: none; border-color: #3498db; }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-primary:hover { background: #2980b9; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-success:hover { background: #219a52; }
+
+        .message { padding: 12px; border-radius: 4px; margin-bottom: 15px; }
+        .message.error { background: #f8d7da; color: #721c24; }
+        .message.success { background: #d4edda; color: #155724; }
+        .message.info { background: #cce5ff; color: #004085; }
+        .hidden { display: none; }
+
+        .loading { text-align: center; padding: 40px; color: #999; }
+        .product-list { margin: 10px 0; }
+        .product-item { padding: 4px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <p style="margin-bottom: 15px;"><a href="/html">&larr; Retour aux produits</a></p>
+        <h1>Commande #{{ order_id }}</h1>
+
+        <div id="message" class="hidden"></div>
+        <div id="loading" class="loading">Chargement de la commande...</div>
+        <div id="content" class="hidden">
+
+            <!-- Resume de la commande -->
+            <div class="card" id="order-summary"></div>
+
+            <!-- Formulaire informations client -->
+            <div class="card" id="shipping-section">
+                <h2>Informations de livraison</h2>
+                <form id="shipping-form" onsubmit="submitShipping(event)">
+                    <div>
+                        <label for="email">Courriel</label>
+                        <input type="email" id="email" name="email" required placeholder="votre@courriel.com" style="width:100%;">
+                    </div>
+                    <div>
+                        <label for="address">Adresse</label>
+                        <input type="text" id="address" name="address" required placeholder="123, rue Exemple" style="width:100%;">
+                    </div>
+                    <div class="form-row">
+                        <div>
+                            <label for="city">Ville</label>
+                            <input type="text" id="city" name="city" required>
+                        </div>
+                        <div>
+                            <label for="province">Province</label>
+                            <select id="province" name="province" required>
+                                <option value="">-- Choisir --</option>
+                                <option value="QC">Quebec (15%)</option>
+                                <option value="ON">Ontario (13%)</option>
+                                <option value="AB">Alberta (5%)</option>
+                                <option value="BC">Colombie-Britannique (12%)</option>
+                                <option value="NS">Nouvelle-Ecosse (14%)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div>
+                            <label for="postal_code">Code postal</label>
+                            <input type="text" id="postal_code" name="postal_code" required placeholder="G7X 3Y7">
+                        </div>
+                        <div>
+                            <label for="country">Pays</label>
+                            <input type="text" id="country" name="country" required value="Canada">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Enregistrer les informations</button>
+                </form>
+            </div>
+
+            <!-- Formulaire paiement -->
+            <div class="card hidden" id="payment-section">
+                <h2>Paiement par carte de credit</h2>
+                <form id="payment-form" onsubmit="submitPayment(event)">
+                    <div>
+                        <label for="cc-name">Nom sur la carte</label>
+                        <input type="text" id="cc-name" name="name" required placeholder="John Doe" style="width:100%;">
+                    </div>
+                    <div>
+                        <label for="cc-number">Numero de carte</label>
+                        <input type="text" id="cc-number" name="number" required placeholder="4242 4242 4242 4242" style="width:100%;">
+                    </div>
+                    <div class="form-row">
+                        <div>
+                            <label for="cc-exp-month">Mois d'expiration</label>
+                            <input type="number" id="cc-exp-month" name="expiration_month" required min="1" max="12" placeholder="9">
+                        </div>
+                        <div>
+                            <label for="cc-exp-year">Annee d'expiration</label>
+                            <input type="number" id="cc-exp-year" name="expiration_year" required min="2024" placeholder="2030">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="cc-cvv">CVV</label>
+                        <input type="text" id="cc-cvv" name="cvv" required maxlength="3" placeholder="123" style="width: 100px;">
+                    </div>
+                    <button type="submit" class="btn btn-success">Payer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ORDER_ID = {{ order_id }};
+        let currentOrder = null;
+        let pollInterval = null;
+
+        async function loadOrder() {
+            try {
+                const resp = await fetch('/order/' + ORDER_ID);
+
+                if (resp.status === 202) {
+                    showMessage('Le paiement est en cours de traitement...', 'info');
+                    if (!pollInterval) {
+                        pollInterval = setInterval(loadOrder, 2000);
+                    }
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('content').classList.remove('hidden');
+                    document.getElementById('shipping-section').classList.add('hidden');
+                    document.getElementById('payment-section').classList.add('hidden');
+                    return;
+                }
+
+                if (pollInterval) {
+                    clearInterval(pollInterval);
+                    pollInterval = null;
+                }
+
+                if (resp.status === 404) {
+                    showMessage('Commande introuvable.', 'error');
+                    return;
+                }
+
+                const data = await resp.json();
+                currentOrder = data.order;
+                renderOrder();
+            } catch (e) {
+                showMessage('Erreur lors du chargement de la commande.', 'error');
+            }
+        }
+
+        function renderOrder() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').classList.remove('hidden');
+
+            const o = currentOrder;
+            let statusClass = 'status-unpaid';
+            let statusText = 'Non payee';
+
+            if (o.paid) {
+                statusClass = 'status-paid';
+                statusText = 'Payee';
+            } else if (o.transaction && o.transaction.success === false && o.transaction.error && o.transaction.error.code) {
+                statusClass = 'status-error';
+                statusText = 'Erreur: ' + o.transaction.error.name;
+            }
+
+            let productsHtml = '';
+            if (o.products && o.products.length > 0) {
+                productsHtml = o.products.map(p =>
+                    '<div class="product-item">Produit #' + p.id + ' &times; ' + p.quantity + '</div>'
+                ).join('');
+            }
+
+            document.getElementById('order-summary').innerHTML =
+                '<h2>Resume</h2>' +
+                '<div class="info-row"><span class="label">Statut</span><span class="status-badge ' + statusClass + '">' + statusText + '</span></div>' +
+                '<div class="info-row"><span class="label">Produits</span><div class="product-list">' + productsHtml + '</div></div>' +
+                '<div class="info-row"><span class="label">Sous-total</span><span>' + (o.total_price || 0).toFixed(2) + ' $</span></div>' +
+                '<div class="info-row"><span class="label">Expedition</span><span>' + (o.shipping_price || 0).toFixed(2) + ' $</span></div>' +
+                '<div class="info-row"><span class="label">Total (taxes incl.)</span><span><strong>' + (o.total_price_tax || 0).toFixed(2) + ' $</strong></span></div>' +
+                (o.email ? '<div class="info-row"><span class="label">Courriel</span><span>' + o.email + '</span></div>' : '') +
+                (o.shipping_information && o.shipping_information.address
+                    ? '<div class="info-row"><span class="label">Livraison</span><span>' +
+                      o.shipping_information.address + ', ' + o.shipping_information.city + ', ' +
+                      o.shipping_information.province + ' ' + o.shipping_information.postal_code + '</span></div>'
+                    : '') +
+                (o.credit_card && o.credit_card.first_digits
+                    ? '<div class="info-row"><span class="label">Carte</span><span>' +
+                      o.credit_card.first_digits + ' **** ' + o.credit_card.last_digits + '</span></div>'
+                    : '') +
+                (o.transaction && o.transaction.id
+                    ? '<div class="info-row"><span class="label">Transaction</span><span>' + o.transaction.id + '</span></div>'
+                    : '');
+
+            // Afficher le bon formulaire selon l'etat
+            if (o.paid) {
+                document.getElementById('shipping-section').classList.add('hidden');
+                document.getElementById('payment-section').classList.add('hidden');
+                hideMessage();
+            } else if (o.email && o.shipping_information && o.shipping_information.address) {
+                document.getElementById('shipping-section').classList.add('hidden');
+                document.getElementById('payment-section').classList.remove('hidden');
+            } else {
+                document.getElementById('shipping-section').classList.remove('hidden');
+                document.getElementById('payment-section').classList.add('hidden');
+            }
+        }
+
+        async function submitShipping(e) {
+            e.preventDefault();
+            const body = {
+                order: {
+                    email: document.getElementById('email').value,
+                    shipping_information: {
+                        country: document.getElementById('country').value,
+                        address: document.getElementById('address').value,
+                        postal_code: document.getElementById('postal_code').value,
+                        city: document.getElementById('city').value,
+                        province: document.getElementById('province').value,
+                    }
+                }
+            };
+
+            try {
+                const resp = await fetch('/order/' + ORDER_ID, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+                const data = await resp.json();
+                if (resp.ok) {
+                    showMessage('Informations enregistrees avec succes!', 'success');
+                    currentOrder = data.order;
+                    renderOrder();
+                } else {
+                    const errMsg = data.errors
+                        ? Object.values(data.errors).map(e => e.name || e.code).join(', ')
+                        : 'Erreur';
+                    showMessage(errMsg, 'error');
+                }
+            } catch (e) {
+                showMessage('Erreur de communication avec le serveur.', 'error');
+            }
+        }
+
+        async function submitPayment(e) {
+            e.preventDefault();
+            const body = {
+                credit_card: {
+                    name: document.getElementById('cc-name').value,
+                    number: document.getElementById('cc-number').value,
+                    expiration_month: parseInt(document.getElementById('cc-exp-month').value),
+                    expiration_year: parseInt(document.getElementById('cc-exp-year').value),
+                    cvv: document.getElementById('cc-cvv').value,
+                }
+            };
+
+            try {
+                const resp = await fetch('/order/' + ORDER_ID, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+
+                if (resp.status === 202) {
+                    showMessage('Paiement en cours de traitement...', 'info');
+                    document.getElementById('payment-section').classList.add('hidden');
+                    pollInterval = setInterval(loadOrder, 2000);
+                    return;
+                }
+
+                if (resp.status === 422) {
+                    const data = await resp.json();
+                    const errMsg = data.errors
+                        ? Object.values(data.errors).map(e => e.name || e.code).join(', ')
+                        : 'Erreur de paiement';
+                    showMessage(errMsg, 'error');
+                    return;
+                }
+
+                loadOrder();
+            } catch (e) {
+                showMessage('Erreur de communication avec le serveur.', 'error');
+            }
+        }
+
+        function showMessage(text, type) {
+            const el = document.getElementById('message');
+            el.textContent = text;
+            el.className = 'message ' + type;
+        }
+
+        function hideMessage() {
+            document.getElementById('message').className = 'hidden';
+        }
+
+        loadOrder();
+    </script>
+</body>
+</html>

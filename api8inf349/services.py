@@ -121,7 +121,7 @@ def create_order(products_data: list) -> Tuple[Optional[Order], Optional[Dict]]:
             }
 
         total_price += product.price * quantity
-        total_weight += product.weight * quantity
+        total_weight += product.weight
         validated_products.append((product, quantity))
 
     shipping_price = calculate_shipping_price(total_weight)

@@ -14,6 +14,7 @@ from urllib.error import URLError
 from flask import Flask
 from redis import Redis
 from rq import Queue
+from peewee import PostgresqlDatabase
 
 from .models import database_proxy, Product, Order, OrderProduct, ShippingInformation, CreditCard, Transaction
 
